@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<title>Open in X</title>
+<style>
+body{font-family:-apple-system,system-ui,sans-serif;background:#000;color:#fff;margin:0;display:flex;min-height:100vh;align-items:center;justify-content:center;text-align:center}
+main{padding:24px;max-width:520px}
+a.btn{display:block;background:#fff;color:#000;font-size:22px;font-weight:700;padding:20px 28px;border-radius:999px;text-decoration:none;margin:20px 0}
+a.web{color:#8b98a5;font-size:15px}
+pre{white-space:pre-wrap;text-align:left;background:#16181c;padding:12px;border-radius:12px;font-size:14px}
+</style></head><body><main>
+<p id="msg">Opening X…</p>
+<a class="btn" id="app" href="#">Open in X</a>
+<pre id="txt"></pre>
+<a class="web" id="web" href="#">Open on x.com instead</a>
+</main>
+<script>
+// No tracking, no network calls. Everything is read from the URL fragment (#...),
+// which browsers never send to the server. Query string is accepted as a fallback.
+// Params: t = text, r = tweet id to reply to, q = tweet id to quote.
+(function(){
+  var raw = location.hash.length > 1 ? location.hash.slice(1) : location.search.slice(1);
+  var p = new URLSearchParams(raw);
+  var t = p.get("t") || "", r = (p.get("r") || "").replace(/\D/g,""), qr = (p.get("q") || "").trim(), q = /^\d+$/.test(qr) ? qr : (/^https?:\/\//.test(qr) ? qr : qr.replace(/\D/g,""));
+  var e = encodeURIComponent, app, web;
+  if (r) {
+    app = "twitter://post?message=" + e(t) + "&in_reply_to_status_id=" + r;
+    web = "https://x.com/intent/post?in_reply_to=" + r + "&text=" + e(t);
+  } else if (q) {
+    var s = /^\d+$/.test(q) ? "https://x.com/i/status/" + q : q;
+    app = "twitter://post?message=" + e(t + " " + s);
+    web = "https://x.com/intent/post?text=" + e(t) + "&url=" + e(s);
+  } else {
+    app = "twitter://post?message=" + e(t);
+    web = "https://x.com/intent/post?text=" + e(t);
+  }
+  document.getElementById("app").href = app;
+  document.getElementById("web").href = web;
+  document.getElementById("txt").textContent = t;
+  if (!t && !r && !q) { document.getElementById("msg").textContent = "Nothing to post."; return; }
+  var left = false;
+  document.addEventListener("visibilitychange", function(){ if (document.hidden) left = true; });
+  window.addEventListener("pagehide", function(){ left = true; });
+  location.href = app;
+  setTimeout(function(){ if (!left && !document.hidden) location.href = web; }, 1500);
+})();
+</script></body></html>
